@@ -76,6 +76,7 @@ export default class RoomClient
 			consume,
 			forceH264,
 			forceVP9,
+			forceAV1,
 			svc,
 			datachannel,
 			externalVideo
@@ -119,6 +120,9 @@ export default class RoomClient
 
 		// Force VP9 codec for sending.
 		this._forceVP9 = Boolean(forceVP9);
+
+		// Force AV1 codec for sending.
+		this._forceAV1 = Boolean(forceAV1);
 
 		// External video.
 		// @type {HTMLVideoElement}
@@ -1018,6 +1022,16 @@ export default class RoomClient
 					throw new Error('desired VP9 codec+configuration is not supported');
 				}
 			}
+			else if (this._forceAV1)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/av1x');
+
+				if (!codec)
+				{
+					throw new Error('desired AV1 codec+configuration is not supported');
+				}
+			}
 
 			if (this._useSimulcast)
 			{
@@ -1028,8 +1042,9 @@ export default class RoomClient
 					.find((c) => c.kind === 'video');
 
 				if (
-					(this._forceVP9 && codec) ||
-					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9'
+					((this._forceVP9 || this._forceAV1) && codec) ||
+					firstVideoCodec.mimeType.toLowerCase() === 'video/vp9' ||
+					firstVideoCodec.mimeType.toLowerCase() === 'video/av1x'
 				)
 				{
 					encodings = WEBCAM_KSVC_ENCODINGS;
@@ -1326,6 +1341,16 @@ export default class RoomClient
 				if (!codec)
 				{
 					throw new Error('desired VP9 codec+configuration is not supported');
+				}
+			}
+			else if (this._forceAV1)
+			{
+				codec = this._mediasoupDevice.rtpCapabilities.codecs
+					.find((c) => c.mimeType.toLowerCase() === 'video/av1x');
+
+				if (!codec)
+				{
+					throw new Error('desired AV1 codec+configuration is not supported');
 				}
 			}
 
@@ -2139,13 +2164,15 @@ export default class RoomClient
 			//
 			// Just get access to the mic and DO NOT close the mic track for a while.
 			// Super hack!
-			{
+			try {
 				const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 				const audioTrack = stream.getAudioTracks()[0];
 
 				audioTrack.enabled = false;
 
 				setTimeout(() => audioTrack.stop(), 120000);
+			} catch(err) {
+				console.error(err);
 			}
 			// Create mediasoup Transport for sending (unless we don't want to produce).
 			if (this._produce)
