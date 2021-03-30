@@ -5,6 +5,7 @@ import { getProtooUrl } from './urlFactory';
 import * as cookiesManager from './cookiesManager';
 import * as requestActions from './redux/requestActions';
 import * as stateActions from './redux/stateActions';
+import * as e2e from './e2e';
 
 const VIDEO_CONSTRAINS =
 {
@@ -79,7 +80,8 @@ export default class RoomClient
 			forceAV1,
 			svc,
 			datachannel,
-			externalVideo
+			externalVideo,
+			e2eKey
 		}
 	)
 	{
@@ -127,6 +129,9 @@ export default class RoomClient
 		// External video.
 		// @type {HTMLVideoElement}
 		this._externalVideo = null;
+
+		// Enabled end-to-end encryption.
+		this._e2eKey = e2eKey;
 
 		// MediaStream of the external video.
 		// @type {MediaStream}
@@ -230,6 +235,11 @@ export default class RoomClient
 		{
 			WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
 			SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = svc;
+		}
+
+		if (this._e2eKey && e2e.isSupported())
+		{
+			e2e.setCryptoKey('setCryptoKey', this._e2eKey, true);
 		}
 	}
 
@@ -348,6 +358,11 @@ export default class RoomClient
 								rtpParameters,
 								appData : { ...appData, peerId } // Trick.
 							});
+
+						if (this._e2eKey && e2e.isSupported())
+						{
+							e2e.setupReceiverTransform(consumer.rtpReceiver);
+						}
 
 						// Store in the map.
 						this._consumers.set(consumer.id, consumer);
@@ -817,6 +832,11 @@ export default class RoomClient
 					// 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
 				});
 
+			if (this._e2eKey && e2e.isSupported())
+			{
+				e2e.setupSenderTransform(this._micProducer.rtpSender);
+			}
+
 			store.dispatch(stateActions.addProducer(
 				{
 					id            : this._micProducer.id,
@@ -1062,6 +1082,11 @@ export default class RoomClient
 					codecOptions,
 					codec
 				});
+
+			if (this._e2eKey && e2e.isSupported())
+			{
+				e2e.setupSenderTransform(this._webcamProducer.rtpSender);
+			}
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -1387,6 +1412,11 @@ export default class RoomClient
 						share : true
 					}
 				});
+
+			if (this._e2eKey && e2e.isSupported())
+			{
+				e2e.setupSenderTransform(this._shareProducer.rtpSender);
+			}
 
 			store.dispatch(stateActions.addProducer(
 				{
@@ -2204,7 +2234,9 @@ export default class RoomClient
 						dtlsParameters,
 						sctpParameters,
 						iceServers             : [],
-						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS
+						proprietaryConstraints : PC_PROPRIETARY_CONSTRAINTS,
+						additionalSettings 	   :
+							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
 					});
 
 				this._sendTransport.on(
@@ -2309,7 +2341,9 @@ export default class RoomClient
 						iceCandidates,
 						dtlsParameters,
 						sctpParameters,
-						iceServers : []
+						iceServers 	       : [],
+						additionalSettings :
+							{ encodedInsertableStreams: this._e2eKey && e2e.isSupported() }
 					});
 
 				this._recvTransport.on(
