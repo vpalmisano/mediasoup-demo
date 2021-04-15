@@ -75,6 +75,7 @@ async function run()
 	const consume = urlParser.query.consume !== 'false';
 	const forceH264 = urlParser.query.forceH264 === 'true';
 	const forceVP9 = urlParser.query.forceVP9 === 'true';
+	const forceL16 = urlParser.query.forceL16 === 'true';
 	const svc = urlParser.query.svc;
 	const datachannel = urlParser.query.datachannel !== 'false';
 	const info = urlParser.query.info === 'true';
@@ -123,6 +124,7 @@ async function run()
 			case 'consume':
 			case 'forceH264':
 			case 'forceVP9':
+			case 'forceL16':
 			case 'forceTcp':
 			case 'svc':
 			case 'datachannel':
@@ -181,6 +183,7 @@ async function run()
 			consume,
 			forceH264,
 			forceVP9,
+			forceL16,
 			svc,
 			datachannel,
 			externalVideo,

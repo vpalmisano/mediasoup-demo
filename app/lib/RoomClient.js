@@ -22,9 +22,9 @@ const PC_PROPRIETARY_CONSTRAINTS =
 // Used for simulcast webcam video.
 const WEBCAM_SIMULCAST_ENCODINGS =
 [
-	{ scaleResolutionDownBy: 4, maxBitrate: 500000 },
-	{ scaleResolutionDownBy: 2, maxBitrate: 1000000 },
-	{ scaleResolutionDownBy: 1, maxBitrate: 5000000 }
+	{ scaleResolutionDownBy: 4 },
+	{ scaleResolutionDownBy: 2 },
+	{ scaleResolutionDownBy: 1 }
 ];
 
 // Used for VP9 webcam video.
@@ -77,6 +77,7 @@ export default class RoomClient
 			consume,
 			forceH264,
 			forceVP9,
+			forceL16,
 			svc,
 			datachannel,
 			externalVideo,
@@ -121,6 +122,9 @@ export default class RoomClient
 
 		// Force VP9 codec for sending.
 		this._forceVP9 = Boolean(forceVP9);
+
+		// Force L16 audio codec for sending.
+		this._forceL16 = Boolean(forceL16);
 
 		// External video.
 		// @type {HTMLVideoElement}
@@ -822,7 +826,9 @@ export default class RoomClient
 					{
 						opusStereo : 1,
 						opusDtx    : 1
-					}
+					},
+					codec : this._mediasoupDevice.rtpCapabilities.codecs
+						.find((codec) => codec.mimeType.toLowerCase() === `audio/${this._forceL16 ? 'l16' : 'opus'}`)
 					// NOTE: for testing codec selection.
 					// codec : this._mediasoupDevice.rtpCapabilities.codecs
 					// 	.find((codec) => codec.mimeType.toLowerCase() === 'audio/pcma')
