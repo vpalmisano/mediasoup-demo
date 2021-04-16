@@ -823,10 +823,11 @@ export default class RoomClient
 				{
 					track,
 					codecOptions :
-					{
-						opusStereo : 1,
-						opusDtx    : 1
-					},
+						this._forceL16 ? {} :
+							{
+								opusStereo : 1,
+								opusDtx    : 1
+							},
 					codec : this._mediasoupDevice.rtpCapabilities.codecs
 						.find((codec) => codec.mimeType.toLowerCase() === `audio/${this._forceL16 ? 'l16' : 'opus'}`)
 					// NOTE: for testing codec selection.
