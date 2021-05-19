@@ -233,7 +233,7 @@ export default class RoomClient
 		// Set custom SVC scalability mode.
 		if (svc)
 		{
-			WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = `${svc}_KEY`;
+			WEBCAM_KSVC_ENCODINGS[0].scalabilityMode = svc;
 			SCREEN_SHARING_SVC_ENCODINGS[0].scalabilityMode = svc;
 		}
 
@@ -2194,15 +2194,18 @@ export default class RoomClient
 			//
 			// Just get access to the mic and DO NOT close the mic track for a while.
 			// Super hack!
-			try {
+			try
+			{
 				const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 				const audioTrack = stream.getAudioTracks()[0];
 
 				audioTrack.enabled = false;
 
 				setTimeout(() => audioTrack.stop(), 120000);
-			} catch(err) {
-				console.error(err);
+			}
+			catch (err)
+			{
+				logger.error(err);
 			}
 			// Create mediasoup Transport for sending (unless we don't want to produce).
 			if (this._produce)
